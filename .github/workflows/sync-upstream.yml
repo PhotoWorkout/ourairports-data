@@ -1,0 +1,97 @@
+name: Sync with Upstream OurAirports Data
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+    inputs:
+      force_sync:
+        description: 'Force sync even if no changes'
+        required: false
+        default: 'false'
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for proper merging
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/davidmegginson/ourairports-data.git || true
+          git remote set-url upstream https://github.com/davidmegginson/ourairports-data.git
+
+      - name: Fetch upstream changes
+        run: |
+          git fetch upstream
+          git fetch origin
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          # Check if there are any new commits in upstream
+          BEHIND=$(git rev-list --count HEAD..upstream/main)
+          echo "commits_behind=$BEHIND" >> $GITHUB_OUTPUT
+          
+          if [ "$BEHIND" -gt 0 ] || [ "${{ github.event.inputs.force_sync }}" == "true" ]; then
+            echo "sync_needed=true" >> $GITHUB_OUTPUT
+            echo "📊 Found $BEHIND new commits in upstream"
+          else
+            echo "sync_needed=false" >> $GITHUB_OUTPUT
+            echo "✅ Already up to date with upstream"
+          fi
+
+      - name: Merge upstream changes
+        if: steps.check_changes.outputs.sync_needed == 'true'
+        run: |
+          echo "🔄 Merging upstream changes..."
+          git merge upstream/main --no-edit || {
+            echo "❌ Merge conflict detected. Manual intervention required."
+            exit 1
+          }
+
+      - name: Push changes
+        if: steps.check_changes.outputs.sync_needed == 'true'
+        run: |
+          echo "📤 Pushing changes to fork..."
+          git push origin main
+
+      - name: Create summary
+        if: always()
+        run: |
+          echo "## Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Upstream**: davidmegginson/ourairports-data" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commits behind**: ${{ steps.check_changes.outputs.commits_behind }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Sync needed**: ${{ steps.check_changes.outputs.sync_needed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: $([ '${{ steps.check_changes.outputs.sync_needed }}' == 'true' ] && echo '✅ Synced' || echo '📋 No changes')" >> $GITHUB_STEP_SUMMARY
+
+  notify-webhook:
+    runs-on: ubuntu-latest
+    needs: sync-upstream
+    if: needs.sync-upstream.outputs.sync_needed == 'true'
+    steps:
+      - name: Notify sync system
+        run: |
+          # Optional: Add webhook notification to your sync system
+          # curl -X POST "https://your-sync-app.com/webhook/github-update" \
+          #   -H "Content-Type: application/json" \
+          #   -d '{"event": "upstream_sync", "repository": "${{ github.repository }}"}'
+          echo "🔔 Sync completed - your app can now detect new changes"
+          
+# Instructions for PhotoWorkout/ourairports-data:
+# 1. Copy this file to your fork at: .github/workflows/sync-upstream.yml
+# 2. Commit and push to enable automatic daily syncing
+# 3. Go to Actions tab to see sync status
+# 4. Use "Run workflow" button to manually trigger sync 

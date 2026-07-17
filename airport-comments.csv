@@ -1,4 +1,8 @@
 "id", "threadRef", "airportRef", "airportIdent", "date", "memberNickname", "subject", "body"
+609852,83331,609851,"IT-0987","2026-07-16 17:24:19","Pugliapilot","Elisuperficie di Formigliana","Elisuperificie di servizio e soccorso"
+609850,83330,609849,"IT-0986","2026-07-16 17:19:22","Pugliapilot","Elisuperficie di Recetto","Elisuperficie di servizio e soccorso"
+609847,83329,609846,"IT-0985","2026-07-16 17:15:34","Pugliapilot","Elisuperficie Casalvolone","elisuperficie di servizio e soccorso"
+609840,83328,607205,"HHAL","2026-07-16 12:08:48","SteveZ","Rough Airsrip","Soft Airstip RWY 020/200.     Managed to get Cessna 208 in"
 609830,83327,5044,"NZNS","2026-07-16 00:03:33","MikeFly","CHANGES TO NAVIGATIONAL BEACONS","1. The Appleby NDB 210.0 KHz is no longer in existance.
 2  The VOR Position and frequency have changed. Frequency is now 113.10 MHz and position is directly in line with the centre line of the runway at the Southern end ""Runway 20"" on the Monaco strip of land. 
 If you look at the map, there is housing to the East and West of the centre part of the strip of land called ""Monaco"". 
